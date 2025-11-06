@@ -1,0 +1,23 @@
+# Sensitive / large
+*.key
+*.pem
+*.p12
+*.kdb
+*.ovpn
+*.log
+*.pcap
+*.sqlite
+vm-images/
+*.tar.gz
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+
+# Node / build
+node_modules/
+dist/
+
+# Secrets
+.env
