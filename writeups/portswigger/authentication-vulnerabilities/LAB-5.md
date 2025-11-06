@@ -2,7 +2,7 @@
 
 #### :o: *Category*: Broken Authentication
 
-#### :dart: *Goal*: Gain Access to account portal by brute-force attempts
+#### :dart: *Goal*: Exploit the logic-flow in the authentication Mechanism
 
 ## :large_blue_circle: Methodology
 
