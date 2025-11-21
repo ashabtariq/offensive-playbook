@@ -129,7 +129,7 @@ msf5 auxiliary(scanner/smb/smb_version) > run
 [*] Auxiliary module execution completed
 ~~~
 
-This gives us the operatin gsystem and the workgroup name and confirms that SMB service is infact running. This information can be used for further exploitation. But it does not gives us the version so we can use operating system information to search for exploit online.
+This gives us the operating system and the workgroup name and confirms that SMB service is infact running. This information can be used for further exploitation. But it does not gives us the version so we can use operating system information to search for exploit online.
 
 [SMB NetAPI Exploit on Rapid7](https://www.rapid7.com/db/modules/exploit/windows/smb/ms08_067_netapi)
 
