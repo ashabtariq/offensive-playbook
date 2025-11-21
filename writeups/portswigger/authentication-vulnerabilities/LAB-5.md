@@ -1,8 +1,9 @@
 #  LAB-5: Username enumeration via account lock
 
-#### :o: *Category*: Broken Authentication
+#### :o: Category: Broken Authentication
 
-#### :dart: *Goal*: Exploit the logic-flow in the authentication Mechanism
+#### :dart: Goal 
+This lab is vulnerable to username enumeration. It uses account locking, but this contains a logic flaw. To solve the lab, enumerate a valid username, brute-force this user's password, then access their account page.
 
 ## :large_blue_circle: Methodology
 
@@ -25,3 +26,6 @@ One way in which websites try to prevent brute-forcing is to lock the account if
 7. In the results, look at the grep extract column. Notice that there are a couple of different error messages, but one of the responses did not contain any error message. Make a note of this password.
 
 8. Wait for a minute to allow the account lock to reset. Log in using the username and password that you identified and access the user account page to solve the lab.
+
+
+arcsight

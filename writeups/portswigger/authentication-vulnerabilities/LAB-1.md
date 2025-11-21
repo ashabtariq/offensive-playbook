@@ -6,7 +6,7 @@
 
 ## :large_blue_circle: Methodology
 
-Login portal had no brute-force protection and successive attempts were not blocked so bruteforcing the login was the best choice. To exploit we will first identify the correct username first and then the password using the same approach
+Login portal had no brute-force protection and successive attempts were not blocked so bruteforcing the login was the best choice. To exploit we will identify the correct username first and then the password using the same approach
 
 ## :large_blue_circle: Steps
 
