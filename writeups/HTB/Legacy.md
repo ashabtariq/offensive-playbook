@@ -198,7 +198,7 @@ meterpreter > help
 
 ~~~
 
-Using this authority we can use the hashdum command to dump the SAM Hashses and use them to exploit the system further but we already have the authority hence the machine is wxploited successfully
+Using this authority we can use the hashdum command to dump the SAM Hashses and use them to exploit the system further but we already have the authority hence the machine is exploited successfully
 
 ~~~bash
 meterpreter > hashdump
