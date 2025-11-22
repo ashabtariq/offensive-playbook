@@ -31,6 +31,7 @@ Due to IP block we were unable to run the brute-force method as the ip was block
 #### Step-by-Step Process:
 
 1. For the attack we need to prepare a separate username and password file, the idea is that once correct credentials are provided the block counter is reset, so we will add correct username and correct password in the wordlist. Make sure to keep the username and password consistent and infornt of each other.
+
 ![Payload Creation](../../screenshots/ps-lab04-1.png "Login Request")
 
 2. For Payload configration, payload position 1  should be username and payload set will be username file (file in wordlist folder) and position 2 will be password and pass4 file from wordlist folder 
