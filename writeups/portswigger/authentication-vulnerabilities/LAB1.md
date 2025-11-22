@@ -18,7 +18,7 @@ Lab login endpoint was vulnerable to brute-force attacks as the succesive incorr
 - Tools used: Burp Suite
 
 ### 2. Vulnerability Identification
-- **Vulnerability Type:** Brute-force
+- **Vulnerability Type:** Broken Authentication
 - **Location:** /login endpoint
 - **Trigger:** Using sniper attack, brute-force userame and check response, a 302 reponse means correct response
 
