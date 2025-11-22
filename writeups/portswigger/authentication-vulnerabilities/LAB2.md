@@ -14,7 +14,7 @@ Lab login endpoint was vulnerable to brute-force attacks as the succesive incorr
 
 ### 1. Reconnaissance
 - Login page has no brute-force protection as successive incorrect attempts were not blocked
-- Application returned no error response for correct username
+- Application returned different error response for correct credentials
 - Tools used: Burp Suite
 
 ### 2. Vulnerability Identification
